@@ -1,0 +1,4 @@
+User-agent: *
+Disallow: 
+
+Sitemap: http://chainsaw.github.io/sitemap.xml 
