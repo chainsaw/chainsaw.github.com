@@ -4,7 +4,7 @@
   <title><![CDATA[chainsaw's blog]]></title>
   <link href="http://chainsaw.github.io/atom.xml" rel="self"/>
   <link href="http://chainsaw.github.io/"/>
-  <updated>2013-08-22T23:13:00+08:00</updated>
+  <updated>2013-08-23T00:16:07+08:00</updated>
   <id>http://chainsaw.github.io/</id>
   <author>
     <name><![CDATA[chainsaw]]></name>
@@ -12,5 +12,14 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[test]]></title>
+    <link href="http://chainsaw.github.io/blog/2013/08/23/test/"/>
+    <updated>2013-08-23T00:14:00+08:00</updated>
+    <id>http://chainsaw.github.io/blog/2013/08/23/test</id>
+    <content type="html"><![CDATA[
+]]></content>
+  </entry>
   
 </feed>
