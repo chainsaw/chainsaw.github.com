@@ -9,7 +9,7 @@
 	<meta name="author" content="chainsaw">
 
 	
-	<meta name="description" content=" Aug 26th, 2013 Android翻译 Dalvik虚拟机结构 Blog Archives ">
+	<meta name="description" content="Aug 26th, 2013 Android翻译 Dalvik虚拟机结构 背景 Java这个语言最大的特性之一就是“一次编写，处处运行”。这项能力主要来自于Java平台（JAVA Platform）,而Java平台的基础就是Java虚拟机（JVM）。 在桌面端(JSE)和服务器端(JEE)， &hellip;">
 	
 
   <!-- http://t.co/dKP3o1e -->
@@ -115,7 +115,119 @@
 	</div>
 	<h1 class="title" itemprop="name"><a href="/blog/2013/08/26/dalvik-virtual-machine/" itemprop="url">Dalvik虚拟机结构</a></h1>
 	<div class="entry-content" itemprop="articleBody">
-		
+		<h2>背景</h2>
+
+<p>Java这个语言最大的特性之一就是“一次编写，处处运行”。这项能力主要来自于Java平台（JAVA Platform）,而Java平台的基础就是Java虚拟机（JVM）。</p>
+
+<p>在桌面端(JSE)和服务器端(JEE)，Java平台已经基本实现了这个特性，但是移动端(JME)的Java平台非常碎片化，需要非常多的配置和包来适配不同的设备，这让普通的开发者很是头痛，因此当Google决定用Java作为android的开发语言的时候，它放弃了JME和JVM，使用Dalvik虚拟机。于此同时，Google也对Java语言的标准库进行了限制和扩展，形成了一套独特的非标准Java平台。</p>
+
+<h2>局限性</h2>
+
+<p>Android平台是为那些只拥有有限的CPU、RAM、ROM的设备设计的，Android设备的最低硬件要求如下：</p>
+
+<table>
+<thead>
+<tr>
+<th></th>
+<th> 设备 </th>
+<th> 最低要求 </th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td></td>
+<td> 芯片 </td>
+<td> 基于ARM  |</td>
+</tr>
+<tr>
+<td></td>
+<td> 内存 </td>
+<td> 128MB RAM;256MB 闪存  |</td>
+</tr>
+<tr>
+<td></td>
+<td>外部存储</td>
+<td>Mini SD 或者Micro SD|</td>
+</tr>
+<tr>
+<td></td>
+<td>主显示设备</td>
+<td>QVGA TFT LCD或者更大；16位或者更多的色彩|</td>
+</tr>
+<tr>
+<td></td>
+<td>摄像头</td>
+<td>200万像素CMOS|</td>
+</tr>
+<tr>
+<td></td>
+<td>USB</td>
+<td>标准mini-B USB接口|</td>
+</tr>
+<tr>
+<td></td>
+<td>蓝牙</td>
+<td>1.2或2.0标准|</td>
+</tr>
+</tbody>
+</table>
+
+
+<p>现在的市场上几乎所有的智能手机都可以很轻松的满足以上这一些条件，但是这些条件也从侧面反映出Android平台可以被使用于很多资源非常有限的设备上。</p>
+
+<p>当一个应用平台需要支持非常多的设备和环境的时候，将这个平台从底层操作系统和硬件设备中抽象出来就显得格外重要了。</p>
+
+<p>当应用开发的生态系统形成之后，成千上万的第三方开发者会开发出各式各样的应用。在这样的大前提下，要做到系统和应用本身的稳定和安全，应用必须有严格的策略制约，同时应用不能访问任何系统内部或者其他应用内的接口。</p>
+
+<p>以上这些要求总结一下，就是Android runtime必须支持一下几点：</p>
+
+<ul>
+<li>有限的处理器速度</li>
+<li>有限的RAM</li>
+<li>没有交换区</li>
+<li>使用电池作为电源</li>
+<li>不同的硬件设备</li>
+<li>应用运行时的沙盒(runtime sandbox)</li>
+</ul>
+
+
+<h2>设计概述</h2>
+
+<p>由于Android应用runtime必须支持不同的硬件设备，而且考虑到安全、性能和稳定性的因素，Android应用必须在沙盒中运行，这时虚拟机就变成了一个显而易见的选择。但是使用虚拟机并不能平衡你对于低内存，低处理器速度要求。</p>
+
+<p>Google又是如何来满足这些某种意义上自我冲突的要求的呐？</p>
+
+<p>Google的解决方案是这样的：</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>每一个Android应用程序都运行在一个独立的进程，拥有独立的Dalvik虚拟机实例。Dalvik设计的原则就是同一个设备可以非常高效的同时运行多个虚拟机。Dalvik的可执行文件是为最小化内存占用而优化的。Dalvik虚拟机是基于寄存器开发的，可以运行由Java编译产生的.class文件通过dx工具再次转化生成的.dex格式文件。
+</span><span class='line'>Dalvik虚拟机依赖Linux内核来执行某些功能，比如线程处理和底层内存管理。
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>让每一个应用程序运行在独立的进程和独立的虚拟机中这样的机制，不仅要求多个虚拟机同时运行的时候需要高效，同时也要求创建虚拟机的过程是非常高效的。</p>
+
+<p>本文接下来的部分分析Dalvik虚拟机在受到上一章所说的种种制约之下的设计抉择，主要分为.dex文件格式，Zygote，基于寄存器的构架和安全机制这几个部分。</p>
+
+<h3>DEX文件格式</h3>
+
+<p>在标准的Java环境中，Java源代码被编译成Java字节码，存放在.class文件中。.class文件有JVM在运行态的时候读取，Java代码中的每一个类都会生成一个.class文件。</p>
+
+<p>在Android平台上，Java源代码仍然会被编译成.class文件，但是当.class文件生成之后，系统会使用dx工具把.class文件转换成.dex文件。一个.class文件只包含一个类，而一个.dex文件可以包含很多类，只有.dex文件才能在Dalvik虚拟机上运行。</p>
+
+<p>.dex文件主要是为了减少内存占用和分享数据而设计的。
+.dex文件和.jar文件的转换如下图所示：</p>
+
+<p><img src="/images/class_to_dex.jpg" title="dex文件结构" alt="alt text" /></p>
+
+<h3>Zygote</h3>
+
+<h3>基于寄存器的结构</h3>
+
+<h3>安全</h3>
+
+<h2>结论</h2>
 
 		
 		
@@ -136,7 +248,7 @@
   <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
 </p>
 
-Design credit: <a href="http://shashankmehta.in/archive/2012/greyshade.html">Shashank Mehta</a></footer>
+Design credit: <a href="http://shashankmehta.in/archive/2012/greyshade.html" target="_blank">Shashank Mehta</a></footer>
 			
 
 
