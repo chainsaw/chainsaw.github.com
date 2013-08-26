@@ -1,14 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <feed xmlns="http://www.w3.org/2005/Atom">
 
-  <title><![CDATA[Category: Android翻译 | chainsaw's blog]]></title>
+  <title><![CDATA[Category: Android翻译 | 大狗]]></title>
   <link href="http://chainsaw.github.io/blog/categories/androidfan-yi/atom.xml" rel="self"/>
   <link href="http://chainsaw.github.io/"/>
-  <updated>2013-08-26T15:12:43+08:00</updated>
+  <updated>2013-08-26T16:33:03+08:00</updated>
   <id>http://chainsaw.github.io/</id>
   <author>
     <name><![CDATA[chainsaw]]></name>
-    
+    <email><![CDATA[ywp123@gmail.com]]></email>
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
