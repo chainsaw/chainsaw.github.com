@@ -109,37 +109,37 @@
 <tr>
 <td></td>
 <td> 芯片 </td>
-<td> 基于ARM  |</td>
+<td> 基于ARM  </td>
 </tr>
 <tr>
 <td></td>
 <td> 内存 </td>
-<td> 128MB RAM;256MB 闪存  |</td>
+<td> 128MB RAM;256MB 闪存  </td>
 </tr>
 <tr>
 <td></td>
 <td>外部存储</td>
-<td>Mini SD 或者Micro SD|</td>
+<td>Mini SD 或者Micro SD</td>
 </tr>
 <tr>
 <td></td>
 <td>主显示设备</td>
-<td>QVGA TFT LCD或者更大；16位或者更多的色彩|</td>
+<td>QVGA TFT LCD或者更大；16位或者更多的色彩</td>
 </tr>
 <tr>
 <td></td>
 <td>摄像头</td>
-<td>200万像素CMOS|</td>
+<td>200万像素CMOS</td>
 </tr>
 <tr>
 <td></td>
 <td>USB</td>
-<td>标准mini-B USB接口|</td>
+<td>标准mini-B USB接口</td>
 </tr>
 <tr>
 <td></td>
 <td>蓝牙</td>
-<td>1.2或2.0标准|</td>
+<td>1.2或2.0标准</td>
 </tr>
 </tbody>
 </table>
@@ -171,12 +171,8 @@
 
 <p>Google的解决方案是这样的：</p>
 
-<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-</pre></td><td class='code'><pre><code class=''><span class='line'>每一个Android应用程序都运行在一个独立的进程，拥有独立的Dalvik虚拟机实例。Dalvik设计的原则就是同一个设备可以非常高效的同时运行多个虚拟机。Dalvik的可执行文件是为最小化内存占用而优化的。Dalvik虚拟机是基于寄存器开发的，可以运行由Java编译产生的.class文件通过dx工具再次转化生成的.dex格式文件。
-</span><span class='line'>Dalvik虚拟机依赖Linux内核来执行某些功能，比如线程处理和底层内存管理。
-</span></code></pre></td></tr></table></div></figure>
-
+<blockquote><p>每一个Android应用程序都运行在一个独立的进程，拥有独立的Dalvik虚拟机实例。Dalvik设计的原则就是同一个设备可以非常高效的同时运行多个虚拟机。Dalvik的可执行文件是为最小化内存占用而优化的。Dalvik虚拟机是基于寄存器开发的，可以运行由Java编译产生的.class文件通过dx工具再次转化生成的.dex格式文件。
+Dalvik虚拟机依赖Linux内核来执行某些功能，比如线程处理和底层内存管理。</p></blockquote>
 
 <p>让每一个应用程序运行在独立的进程和独立的虚拟机中这样的机制，不仅要求多个虚拟机同时运行的时候需要高效，同时也要求创建虚拟机的过程是非常高效的。</p>
 
@@ -193,13 +189,104 @@
 
 <p><img src="/images/class_to_dex.jpg" title="dex文件结构" alt="alt text" /></p>
 
+<p>.dex文件主要通过使用共享的，指定类型的常量池来节约内存。常量池中存放这些类中使用的所有常量，这些常量通过常量池中的索引进行引用。通过这样的方式，可以将原来.class文件中重复使用的常量进行去重（.class文件的存放方式会造成一个常量存在多份拷贝，存在在不同的.class文件中）。</p>
+
+<p>从图中可以看到，所有常量不是存放在同一个常量池中，而是通过类型来指定存放的。这样的存放方式可以使得常量更加颗粒化，从而进行更加深度的去重操作。
+打个比方，现在存在两个方法签名分别是(Ljava/lang/String;Ljava/lang/Object;)Ljava/lang/String;和(Ljava/lang/String;Lcom/example/Foo;)Ljava/lang/String;。在.class文件中，这样的方法是分别混乱的存放着的，但是当转换成.dex文件的时候，Ljava/lang/String就会只存放一次，任何需要使用到它的地方去引用它。</p>
+
+<p>共享常量池的做法使得常量的重复度降到了最低，但是同样带来了这样 一个问题，.dex文件中的指针和引用比.class中很明显的增多了。</p>
+
+<p>共享常量池的主要目的是节省内存，但是实际上这样做能节省多少内存呐？跟具早期的一些研究，.class文件本身已经比较小了，但是由于将文件从外存中读入仍然是决定应用启动速度的重要因素，文件的大小还是很重要的。而每一个.class文件中常量部分占61%的文件大小，因此对常量池的优化能很显著的节省内存。
+下面是Android开发团队所统计的数据：</p>
+
+<table>
+<thead>
+<tr>
+<th></th>
+<th> 代码 </th>
+<th> 未压缩Jar（bytes） </th>
+<th>压缩的Jar（bytes）</th>
+<th>未压缩的dex（bytes）</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td></td>
+<td> 通用系统库      </td>
+<td> 21,445,320(100%) </td>
+<td> 10,662,048(50%) </td>
+<td> 10,311,972(48%)</td>
+</tr>
+<tr>
+<td></td>
+<td> 浏览器应用</td>
+<td>470,312(100%)</td>
+<td>232,065(49%)</td>
+<td>209,248(44%)</td>
+</tr>
+<tr>
+<td></td>
+<td> 闹钟应用</td>
+<td>119,200(100%)</td>
+<td>61,658(52%)</td>
+<td>53,020(44%)</td>
+</tr>
+</tbody>
+</table>
+
+
+<p>对应这样的机制，Dalvik的垃圾回收机制也和普通的JVM垃圾回收不一样。由于每一个应用都是运行在独立的进程和VM中的，拥有独立的堆，所以垃圾回收的时候Dalvik会把共享对象标识为&#8221;reachable&#8221;，这样这些对象就不会被垃圾回收。当对象需要被写入时，对象会被拷贝到相应的堆中，然后该对象的标示符（GC在之前所设置的）也会被移动到堆中，在下次GC的时候，所有共享它的对象都会变成非共享。共享常量的原则是，共享的内存是只读的。</p>
+
 <h3>Zygote</h3>
+
+<p>由于每一个应用都拥有自己的VM实例，所以当应用启动的时候，VM实例需要很快的启动，同时占用最小的内存。Android使用一套名为Zygote的机制来实现在多个VM中共享代码，并且保证VM的快速启动。Zygote设计的时候假设系统中有非常大一部分核心类库和相关的堆可以被很多应用所共同使用，它同时假设这些堆结构都是只读的，也就是说基本上所有应用都只是使用这些数据而不是更改数据。这些特性被用来优化跨进程共享数据。</p>
+
+<p>Zygote是一个在系统启动时开启的VM进程。当Zygote启动的时候，它会初始化一个Dalvik虚拟机，在这个虚拟机里面会预载入和初始化核心的类库。这些类库都是只读的，而且非常适合跨进程共享。</p>
+
+<p>当Zygote启动之后，它会开始等待接受系统发来的socket请求，当请求到来的时候，Zygote就会fork出一个子进程来执行该应用程序，这样的方式比冷启动一个全新的VM要快很多。对于一些只读的系统库，所有虚拟机实例都和Zygote共享一块内存区域，大大节省了内存开销。</p>
+
+<p>Zygote中的共享区域的类库都是只读的，当应用要写入这些类库的时候，这部分要被写入的类库会被拷贝到fork出来的子进程中。这种copy-on-write的技术可以从最大程度上共享内存，同时还能保证应用之间的访问安全。</p>
+
+<p>在传统的Java VM中，每一个VM都拥有一套完整的核心类库文件以及相关的堆对象，在VM之间时不共享内存的。</p>
 
 <h3>基于寄存器的结构</h3>
 
+<p>传统的虚拟机结构为了保证VM部署的简单，和编译器后端代码编写的简易性，使用了基于栈的结构。但是这样的结构会导致损失一部分性能。研究表明：</p>
+
+<blockquote><p>基于寄存器的结构比基于栈的结构执行的VM指令少47%，但是基于寄存器的代码量会比基于栈的代码多25%，而这一部分代码增多只会增加1.07%的机器负载。总的来说基于寄存器的结构比基于栈的结构执行时间少32.3%</p></blockquote>
+
+<p>由于Dalvik VM是在计算能力有限的设备上运行的，因此选择基于寄存器的结构也就变得非常合理了。
+虚拟机中指令的解释执行时间主要花在以下三个方面：</p>
+
+<ul>
+<li>分发指令</li>
+<li>访问运算数</li>
+<li>执行运算</li>
+</ul>
+
+
+<p>其中“分发指令”这个环节对性能的影响最大。在基于寄存器的虚拟机里，可以更为有效的减少冗余指令的分发和减少内存的读写访问。比如：</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>执行a=b+c
+</span><span class='line'>基于栈：ILOAD c,ILOAD b,IADD,ISTORE a
+</span><span class='line'>基于寄存器: IADD a,b,c
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>虽然这样做带来了25%的代码量增加，但是通过转换成.dex的方式节省了部分代码量，从总体上来说还是比JVM的.class格式更节省内存使用的。</p>
+
 <h3>安全</h3>
 
-<h2>结论</h2>
+<p>Android的安全机制保证了：</p>
+
+<blockquote><p>默认情况下，没有任何应用可以执行危害到其他应用程序、操作系统或者用户文件的操作。这些操作包括读写用户的私有文件、读写其他应用的文件、执行网络请求、保持设备唤醒状态等。</p></blockquote>
+
+<p>Android的安全机制时通过系统级别和框架级别来维护的。由于每一个应该程序都运行在独立的进程上，操作系统会为每一个进程分配独立的用户ID，应用通过这个ID只能访问有限的系统资源和自己的数据文件。如果应用需要掌握更多的权限，可以在自身的Manifest文件中申明需要的权限，这些权限会在应用安装的时候由框架通过操作系统来赋予。</p>
+
+<p>Dalvik VM进程之间虽然都共享同一份核心的库，但是为了安全，每一个VM进程都只有读的权限，无法编辑这些库。</p>
 </div>
 
 </article>
